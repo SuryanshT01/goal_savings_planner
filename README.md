@@ -5,7 +5,7 @@ A modern, responsive web application for tracking and managing financial goals w
 
 ## 🌍 Live Demo
 
-👉 [goal-savings-planner.vercel.app](https://goal-savings-planner.vercel.app) (example)
+👉 [goal-savings-planner.vercel.app](https://goal-savings-planner-st.vercel.app/) 
 
 
 ## 📸 Demo

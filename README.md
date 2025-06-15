@@ -3,6 +3,16 @@
 
 A modern, responsive web application for tracking and managing financial goals with real-time currency conversion between INR and USD.
 
+## 🌍 Live Demo
+
+👉 [goal-savings-planner.vercel.app](https://goal-savings-planner.vercel.app) (example)
+
+
+## 📸 Demo
+
+![App Preview](./public/screenshot.png)
+
+
 ## 🚀 Tech Stack
 
 - **React 18+** with TypeScript

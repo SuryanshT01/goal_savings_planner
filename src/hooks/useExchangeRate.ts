@@ -1,16 +1,17 @@
-
 import { useState, useEffect } from 'react';
 
 interface ExchangeRateData {
-  rate: number;
+  rate: number; // INR per 1 USD
   lastUpdated: Date;
   isLoading: boolean;
   error: string | null;
 }
 
+const API_URL = `https://v6.exchangerate-api.com/v6/${import.meta.env.VITE_EXCHANGE_API_KEY}/latest/INR`;
+
 export const useExchangeRate = () => {
   const [exchangeData, setExchangeData] = useState<ExchangeRateData>({
-    rate: 85.52, // Default fallback rate
+    rate: 85.52, // Fallback rate (INR per USD)
     lastUpdated: new Date(),
     isLoading: false,
     error: null,
@@ -18,32 +19,37 @@ export const useExchangeRate = () => {
 
   const fetchExchangeRate = async () => {
     setExchangeData(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
-      // Using a free exchange rate API
-      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch exchange rate');
-      }
-      
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error('Failed to fetch exchange rate');
+
       const data = await response.json();
-      const inrRate = data.rates.INR;
-      
+      if (data.result !== 'success') throw new Error('API returned error');
+
+      const usdPerInr = data.conversion_rates?.USD;
+
+      if (!usdPerInr || usdPerInr === 0) {
+        throw new Error('Invalid USD rate from response');
+      }
+
+      // Invert to get INR per USD
+      const inrPerUsd = 1 / usdPerInr;
+      const now = new Date();
+
       setExchangeData({
-        rate: inrRate,
-        lastUpdated: new Date(),
+        rate: inrPerUsd,
+        lastUpdated: now,
         isLoading: false,
         error: null,
       });
-      
-      // Cache the rate in localStorage
+
       localStorage.setItem('exchangeRate', JSON.stringify({
-        rate: inrRate,
-        lastUpdated: new Date().toISOString(),
+        rate: inrPerUsd,
+        lastUpdated: now.toISOString(),
       }));
     } catch (error) {
-      console.error('Error fetching exchange rate:', error);
+      console.error('Exchange rate fetch error:', error);
       setExchangeData(prev => ({
         ...prev,
         isLoading: false,
@@ -53,22 +59,20 @@ export const useExchangeRate = () => {
   };
 
   useEffect(() => {
-    // Try to load cached rate first
-    const cachedRate = localStorage.getItem('exchangeRate');
-    if (cachedRate) {
+    const cached = localStorage.getItem('exchangeRate');
+    if (cached) {
       try {
-        const parsed = JSON.parse(cachedRate);
+        const parsed = JSON.parse(cached);
         setExchangeData(prev => ({
           ...prev,
           rate: parsed.rate,
           lastUpdated: new Date(parsed.lastUpdated),
         }));
-      } catch (error) {
-        console.error('Error parsing cached exchange rate:', error);
+      } catch (err) {
+        console.warn('Failed to parse cached exchange rate:', err);
       }
     }
-    
-    // Fetch fresh rate
+
     fetchExchangeRate();
   }, []);
 
